@@ -129,6 +129,7 @@ namespace JFrogVSExtension.Data
 
         public async Task<Artifacts> GetSecurityIssuesAsync(bool reScan, Projects projects, string wd)
         {
+            var componentsSet = new HashSet<Components>();
             if (!reScan)
             {
                 var componentsSet = new HashSet<Components>();
@@ -138,8 +139,6 @@ namespace JFrogVSExtension.Data
                     {
                         // Get project's components which are not included in the cache.
                         componentsSet.UnionWith(Util.GetNoCachedComponents(nugetProject.dependencies, GetComponentsCache()));
-                        // Update cache with new components.
-                        GetComponentsCache().UnionWith(componentsSet);
                     }
                 }
                 // No change to the project dependencies, and a re-scan was not requested - returns the cached results.
@@ -154,6 +153,8 @@ namespace JFrogVSExtension.Data
             // The return value of this function is never used, the data is saved due tothe intenal artifacts refrence.
             // Should be refactored to more maintanable and clear flow.
             GetArtifacts().artifacts.AddRange(artifacts);
+            // Update cache with new components.
+            GetComponentsCache().UnionWith(componentsSet);
             return GetArtifacts();
         }
 

@@ -14,8 +14,6 @@ namespace JFrogVSExtension.Utils
 {
     class Util
     {
-        public readonly static string PREFIX = "nuget://";
-        
         // This method will load the json to a List of objects. 
         // The Json retrieved from the output itself
         public static Projects LoadNugetProjects(String output)
@@ -244,7 +242,7 @@ namespace JFrogVSExtension.Utils
             {
                 Components comp = new Components()
                 {
-                    component_id = PREFIX + dependency.id
+                    component_id = dependency.id
                 };
 
                 if (!componentsCache.Contains(comp))
