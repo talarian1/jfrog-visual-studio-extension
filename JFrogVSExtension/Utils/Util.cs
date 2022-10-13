@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,12 +17,18 @@ namespace JFrogVSExtension.Utils
     {
         // This method will load the json to a List of objects. 
         // The Json retrieved from the output itself
-        public static Projects LoadNugetProjects(String output)
+        public static Project[] LoadNugetProjects(String output)
         {
             // Reading the file as stream and changing to list of items.
             // The items are configured in another class
             Projects projects = JsonConvert.DeserializeObject<Projects>(output);
-            return projects;
+            return projects.NugetProjects;
+        }
+
+        public static Project[] LoadNpmProjects()
+        {
+            var npmProjects = new Project[] { };
+            return npmProjects;
         }
 
         public static async Task<string> GetCLIOutputAsync(string command,string workingDir = "",bool configCommand=false, Dictionary<string,string> envVars= null)
@@ -293,7 +300,7 @@ namespace JFrogVSExtension.Utils
         public List<Artifact> artifacts { get; set; } = new List<Artifact>();
     }
 
-    public class NugetProject
+    public class Project
     {
         public string name;
         public Dependency[] dependencies;
@@ -309,7 +316,10 @@ namespace JFrogVSExtension.Utils
 
     public class Projects
     {
-        public NugetProject[] projects;
+        [JsonProperty(PropertyName = "projects")]
+        public Project[] NugetProjects = new Project[] {};
+        public Project[] NpmProjects = new Project[] {};
+        public IEnumerable<Project> All { get => NugetProjects.Concat(NpmProjects); }
     }
 
     public class Components

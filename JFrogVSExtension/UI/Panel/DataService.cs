@@ -46,7 +46,7 @@ namespace JFrogVSExtension.Data
         public void PopulateRootElements(Projects projects)
         {
             List<String> names = new List<String>();
-            foreach (NugetProject project in projects.projects)
+            foreach (Project project in projects.All)
             {
                 List<string> projectDependencies = new List<string>();
                 Component comp = new Component()
@@ -132,13 +132,12 @@ namespace JFrogVSExtension.Data
             var componentsSet = new HashSet<Components>();
             if (!reScan)
             {
-                var componentsSet = new HashSet<Components>();
-                foreach (NugetProject nugetProject in projects.projects)
+                foreach (Project project in projects.All)
                 {
-                    if (nugetProject.dependencies != null && nugetProject.dependencies.Length > 0)
+                    if (project.dependencies != null && project.dependencies.Length > 0)
                     {
                         // Get project's components which are not included in the cache.
-                        componentsSet.UnionWith(Util.GetNoCachedComponents(nugetProject.dependencies, GetComponentsCache()));
+                        componentsSet.UnionWith(Util.GetNoCachedComponents(project.dependencies, GetComponentsCache()));
                     }
                 }
                 // No change to the project dependencies, and a re-scan was not requested - returns the cached results.
