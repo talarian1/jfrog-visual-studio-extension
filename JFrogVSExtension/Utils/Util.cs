@@ -27,8 +27,36 @@ namespace JFrogVSExtension.Utils
 
         public static Project[] LoadNpmProjects()
         {
-            var npmProjects = new Project[] { };
-            return npmProjects;
+            var npmProjects = new List<Project>();
+            var packageJsonPaths = Directory.GetFiles(Directory.GetCurrentDirectory(), "package.json", SearchOption.AllDirectories);
+            foreach (var packageJsonPath in packageJsonPaths)
+            {
+                // We should ignore packge.json file inside node_modules dirctory
+                if (ContainsNodeModulesDir(packageJsonPath))
+                {
+                    continue;
+                }
+                var project = LoadNpmProject(packageJsonPath);
+                npmProjects.Append(project);
+            }
+            return npmProjects.ToArray();
+        }
+
+        private static Project LoadNpmProject(string packageJsonPath)
+        {
+            var fileInfo = new FileInfo(packageJsonPath);
+            var npmProjectTree = GetProcessOutputAsync("cmd.exe","/C npm ls --json --all --long",fileInfo.DirectoryName);
+            OutputLog.ShowMessageAsync(npmProjectTree.Result)
+                .Wait();
+            var project = new Project();
+            project.directoryPath = fileInfo.DirectoryName;
+            return project;
+        }
+
+        private static bool ContainsNodeModulesDir(string path)
+        {
+            var directories = path.Split(Path.DirectorySeparatorChar);
+            return directories.ToLookup(i => i.ToLower()).Contains("node_modules");
         }
 
         public static async Task<string> GetCLIOutputAsync(string command,string workingDir = "",bool configCommand=false, Dictionary<string,string> envVars= null)
@@ -37,11 +65,16 @@ namespace JFrogVSExtension.Utils
             var strFilePath = Path.Combine(strAppPath, "Resources");
             var pathToCli = Path.Combine(strFilePath, "jfrog.exe");
             await OutputLog.ShowMessageAsync("Path for the JFrog CLI: " + pathToCli);
+           return await GetProcessOutputAsync(pathToCli,command,workingDir, configCommand, envVars);
+        }
+
+        public static async Task<string> GetProcessOutputAsync(string pathToExe, string command, string workingDir = "", bool configCommand = false, Dictionary<string, string> envVars = null)
+        {
             //Create process
-            Process pProcess = new System.Diagnostics.Process();
+            Process pProcess = new Process();
 
             // strCommand is path and file name of command to run
-            pProcess.StartInfo.FileName = pathToCli;
+            pProcess.StartInfo.FileName = pathToExe;
 
             // strCommandParameters are parameters to pass to program
             // Here we will run the nuget command for the cli
@@ -58,7 +91,7 @@ namespace JFrogVSExtension.Utils
             pProcess.StartInfo.WorkingDirectory = workingDir;
             if (envVars != null)
             {
-                foreach (var envVar in envVars) 
+                foreach (var envVar in envVars)
                 {
                     pProcess.StartInfo.EnvironmentVariables[envVar.Key] = envVar.Value;
                 }
@@ -102,28 +135,28 @@ namespace JFrogVSExtension.Utils
                 pProcess.WaitForExit();
 
                 // Wait for the entire output to be written
-                if (outputWaitHandle.WaitOne(1) &&
-                       errorWaitHandle.WaitOne(1))
+                if (outputWaitHandle.WaitOne(100) &&
+                       errorWaitHandle.WaitOne(100))
                 {
                     // Process completed. Check process.ExitCode here.
                     if (pProcess.ExitCode != 0)
                     {
-                        string message = $"Failed to get CLI output for {commandString}. Exit code: {pProcess.ExitCode} Returned error:{error}";
+                        string message = $"Failed to get {pathToExe} output for {commandString}. Exit code: {pProcess.ExitCode} Returned error:{error}";
                         throw new IOException(message);
                     }
                     if (!string.IsNullOrEmpty(error.ToString()))
                     {
                         await OutputLog.ShowMessageAsync(error.ToString());
                     }
-                    // Returning the output from the CLI that is the json itself.
-                    await OutputLog.ShowMessageAsync($"JFrog CLI {commandString} finished successfully");
+                    // Returning the output
+                    await OutputLog.ShowMessageAsync($"{pathToExe} {commandString} finished successfully");
                     return strOutput.ToString();
                 }
                 else
                 {
                     // Timed out.
                     await OutputLog.ShowMessageAsync("Process timeout");
-                    throw new IOException($"Process timeout,  {pathToCli} {commandString}");
+                    throw new IOException($"Process timeout,  {pathToExe} {commandString}");
                 }
             }
         }
@@ -303,6 +336,7 @@ namespace JFrogVSExtension.Utils
     public class Project
     {
         public string name;
+        public string directoryPath;
         public Dependency[] dependencies;
     }
 

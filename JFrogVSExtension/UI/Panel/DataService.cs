@@ -127,15 +127,21 @@ namespace JFrogVSExtension.Data
             return topSeverity;
         }
 
-        public async Task<Artifacts> GetSecurityIssuesAsync(bool reScan, Projects projects, string wd)
+        public async Task<Artifacts> GetSecurityIssuesAsync(bool reScan, Projects projects, string solutionDir)
         {
             var componentsSet = new HashSet<Components>();
+            var workingDirs = new List<string>();
+            workingDirs.Add(solutionDir);
             if (!reScan)
             {
                 foreach (Project project in projects.All)
                 {
                     if (project.dependencies != null && project.dependencies.Length > 0)
                     {
+                        if (!string.IsNullOrEmpty(project.directoryPath))
+                        {
+                            workingDirs.Add(project.directoryPath);
+                        }
                         // Get project's components which are not included in the cache.
                         componentsSet.UnionWith(Util.GetNoCachedComponents(project.dependencies, GetComponentsCache()));
                     }
@@ -147,7 +153,7 @@ namespace JFrogVSExtension.Data
                 }
             }
             ClearAllComponents();
-            var scanResuls = await ScanManager.Instance.PreformScanAsync(wd);
+            var scanResuls = await ScanManager.Instance.PreformScanAsync(workingDirs);
             var artifacts = ParseCliAuditJson(scanResuls);
             // The return value of this function is never used, the data is saved due tothe intenal artifacts refrence.
             // Should be refactored to more maintanable and clear flow.
