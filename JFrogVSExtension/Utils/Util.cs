@@ -37,20 +37,58 @@ namespace JFrogVSExtension.Utils
                     continue;
                 }
                 var project = LoadNpmProject(packageJsonPath);
-                npmProjects.Append(project);
+                if (project!= null)
+                {
+                    npmProjects.Add(project);
+                }
             }
             return npmProjects.ToArray();
         }
 
         private static Project LoadNpmProject(string packageJsonPath)
         {
-            var fileInfo = new FileInfo(packageJsonPath);
-            var npmProjectTree = GetProcessOutputAsync("cmd.exe","/C npm ls --json --all --long",fileInfo.DirectoryName);
-            OutputLog.ShowMessageAsync(npmProjectTree.Result)
-                .Wait();
-            var project = new Project();
-            project.directoryPath = fileInfo.DirectoryName;
-            return project;
+            try
+            {
+                var fileInfo = new FileInfo(packageJsonPath);
+                // Run npm ls to get the dependencies tree. The /C for the process to quit without waiting to user intrupt.
+                var npmProjectTree = GetProcessOutputAsync("cmd.exe", "/C npm ls --json --all --long --package-lock-only", fileInfo.DirectoryName);
+
+                var npmProj = JsonConvert.DeserializeObject<NpmLsNode>(npmProjectTree.Result);
+                var project = new Project()
+                {
+                    name = $"{npmProj.name}:{npmProj.version}",
+                    directoryPath = fileInfo.DirectoryName,
+                    dependencies = new Dependency[]{ },
+                };
+                project.dependencies = populateNpmDepndencies(npmProj);
+                return project;
+            }catch (Exception e)
+            {
+                // log error
+                _ = OutputLog.ShowMessageAsync($"Faild to load project {packageJsonPath}\r\n {e.Message}");
+                return null;
+            }
+        }
+
+        private static Dependency[] populateNpmDepndencies(NpmLsNode npmProj)
+        {
+            // Exit condition - no further dependencies, C# for each throws Excption on null ittreation.
+            if (npmProj.dependencies == null)
+            {
+                return new Dependency[] { };
+            }
+            var dependencies = new Dependency[npmProj.dependencies.Count];
+            var i = 0;
+            foreach(var npmDep in npmProj.dependencies)
+            {
+                var child = new Dependency()
+                {
+                    id = $"{npmDep.Key}:{npmDep.Value.version}",
+                };
+                child.dependencies = populateNpmDepndencies(npmDep.Value);
+                dependencies[i++] = child;
+            }
+            return dependencies;
         }
 
         private static bool ContainsNodeModulesDir(string path)
@@ -132,11 +170,12 @@ namespace JFrogVSExtension.Utils
                 pProcess.Start();
                 pProcess.BeginOutputReadLine();
                 pProcess.BeginErrorReadLine();
-                pProcess.WaitForExit();
+                // Waits for maximal 100 secondes.
+                pProcess.WaitForExit(100000);
 
                 // Wait for the entire output to be written
-                if (outputWaitHandle.WaitOne(100) &&
-                       errorWaitHandle.WaitOne(100))
+                if (outputWaitHandle.WaitOne(1) &&
+                       errorWaitHandle.WaitOne(1))
                 {
                     // Process completed. Check process.ExitCode here.
                     if (pProcess.ExitCode != 0)
@@ -333,6 +372,13 @@ namespace JFrogVSExtension.Utils
         public List<Artifact> artifacts { get; set; } = new List<Artifact>();
     }
 
+    public class NpmLsNode
+    {
+        public string name;
+        public string version;
+        public IDictionary<string, NpmLsNode> dependencies;
+    }
+
     public class Project
     {
         public string name;
@@ -347,6 +393,7 @@ namespace JFrogVSExtension.Utils
         public string md5;
         public Dependency[] dependencies;
     }
+
 
     public class Projects
     {

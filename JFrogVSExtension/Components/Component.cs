@@ -15,7 +15,7 @@ namespace JFrogVSExtension.Data
         public string Artifact { get; set; } = "";
         public string Name { get; set; } = "";
         public string Version { get; set; } = "";
-        public string Type { get; set; } = "Nuget";
+        public string Type { get; set; } = "";
         public List<License> Licenses { get; set; } = new List<License>();
         public Severity TopSeverity { get; set; } = Severity.Normal;
         public List<string> Dependencies { get; set; }
