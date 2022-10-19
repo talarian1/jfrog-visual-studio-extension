@@ -84,6 +84,7 @@ namespace JFrogVSExtension.Utils
                 var child = new Dependency()
                 {
                     id = $"{npmDep.Key}:{npmDep.Value.version}",
+                    packageType = PackageType.npm,
                 };
                 child.dependencies = populateNpmDepndencies(npmDep.Value);
                 dependencies[i++] = child;
@@ -210,7 +211,7 @@ namespace JFrogVSExtension.Utils
 
         public static Component ParseDependencies(Dependency dep, Dictionary<string, Artifact> artifactsMap, DataService dataService)
         {
-            Component comp = new Component(dep.id);
+            Component comp = new Component(dep);
             Severity topSeverity = Severity.Normal;
             if (artifactsMap.ContainsKey(dep.id))
             {
@@ -391,7 +392,14 @@ namespace JFrogVSExtension.Utils
         public string id;
         public string sha1;
         public string md5;
+        public PackageType packageType;
         public Dependency[] dependencies;
+    }
+
+    public enum PackageType
+    {
+        NuGet,
+        npm
     }
 
 
