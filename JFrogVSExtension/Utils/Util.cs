@@ -31,7 +31,7 @@ namespace JFrogVSExtension.Utils
             var packageJsonPaths = Directory.GetFiles(Directory.GetCurrentDirectory(), "package.json", SearchOption.AllDirectories);
             foreach (var packageJsonPath in packageJsonPaths)
             {
-                // We should ignore packge.json file inside node_modules dirctory
+                // We should ignore packge.json file inside node_modules directory
                 if (ContainsNodeModulesDir(packageJsonPath))
                 {
                     continue;
@@ -50,7 +50,7 @@ namespace JFrogVSExtension.Utils
             try
             {
                 var fileInfo = new FileInfo(packageJsonPath);
-                // Run npm ls to get the dependencies tree. The /C for the process to quit without waiting to user intrupt.
+                // Run npm ls to get the dependencies tree. The /C for the process to quit without waiting for a user's interruption.
                 var npmProjectTree = GetProcessOutputAsync("cmd.exe", "/C npm ls --json --all --long --package-lock-only", fileInfo.DirectoryName);
 
                 var npmProj = JsonConvert.DeserializeObject<NpmLsNode>(npmProjectTree.Result);
@@ -72,7 +72,7 @@ namespace JFrogVSExtension.Utils
 
         private static Dependency[] populateNpmDepndencies(NpmLsNode npmProj)
         {
-            // Exit condition - no further dependencies, C# for each throws Excption on null ittreation.
+            // Exit condition - no depper dependencies, C# for each statement throws Exception on null iteration.
             if (npmProj.dependencies == null)
             {
                 return new Dependency[] { };
