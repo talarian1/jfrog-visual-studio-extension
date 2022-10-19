@@ -153,10 +153,10 @@ namespace JFrogVSExtension.Data
                 }
             }
             ClearAllComponents();
-            var scanResuls = await ScanManager.Instance.PreformScanAsync(workingDirs);
-            var artifacts = ParseCliAuditJson(scanResuls);
-            // The return value of this function is never used, the data is saved due tothe intenal artifacts refrence.
-            // Should be refactored to more maintanable and clear flow.
+            var scanResults = await ScanManager.Instance.PreformScanAsync(workingDirs);
+            var artifacts = ParseCliAuditJson(scanResults);
+            // The return value of this function is never used, the data is saved due to the intenal artifacts reference.
+            // Should be refactored to more maintainable and clear flow.
             GetArtifacts().artifacts.AddRange(artifacts);
             // Update cache with new components.
             GetComponentsCache().UnionWith(componentsSet);
@@ -196,7 +196,7 @@ namespace JFrogVSExtension.Data
             var artifacts = new  Dictionary<string,Artifact>();
             var auditResults = JsonConvert.DeserializeObject<List<AuditResults>>(scanResults);
             foreach (var auditResult in auditResults) {
-                // Handle security issuses (violations and vulnerabilities)
+                // Handle security issues (violations and vulnerabilities)
                 foreach (var securityIssue in auditResult.AllSecurityIssues)
                 {
                     foreach (var entry in securityIssue.Components) {
@@ -204,8 +204,8 @@ namespace JFrogVSExtension.Data
                         var directDependencyId = GetIdWithoutPackagePrefix(entry.Value.ImpactPaths[0][0].ComponentId);
                         var artifact = GetOrCreateArtifact(artifacts, artifactId);
                         var issueType = string.IsNullOrEmpty(securityIssue.IssueType) ? "security" : securityIssue.IssueType;
-                        var fixedVerions = entry.Value.FixedVersions != null ? string.Join(" ", entry.Value.FixedVersions) : "";
-                        var issue = new Issue(securityIssue.Severity, securityIssue.Summary, issueType, directDependencyId, fixedVerions);
+                        var fixedVersions = entry.Value.FixedVersions != null ? string.Join(" ", entry.Value.FixedVersions) : "";
+                        var issue = new Issue(securityIssue.Severity, securityIssue.Summary, issueType, directDependencyId, fixedVersions);
                         if (!artifact.Issues.Contains(issue))
                         {
                             artifact.Issues.Add(issue);

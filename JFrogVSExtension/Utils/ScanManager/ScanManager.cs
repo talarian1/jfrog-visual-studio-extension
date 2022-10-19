@@ -39,8 +39,8 @@ namespace JFrogVSExtension.Utils.ScanManager
 
         private async Task ConfigCLIAsync(string xrayUrl, string artifactoryUrl, string user, string password, string accessToken)
         {
-            var cliconfigCommand = $"config add \"{CliServerId}\" --xray-url=\"{xrayUrl}\" --artifactory-url=\"{artifactoryUrl}\" --user=\"{user}\" --password=\"{password}\" --access-token=\"{accessToken}\" --interactive=false --overwrite";
-            _ = await Util.GetCLIOutputAsync(cliconfigCommand, "", true, cliEnv).ConfigureAwait(true);
+            var cliConfigCommand = $"config add \"{CliServerId}\" --xray-url=\"{xrayUrl}\" --artifactory-url=\"{artifactoryUrl}\" --user=\"{user}\" --password=\"{password}\" --access-token=\"{accessToken}\" --interactive=false --overwrite";
+            _ = await Util.GetCLIOutputAsync(cliConfigCommand, "", true, cliEnv).ConfigureAwait(true);
         }
 
         public async Task<string> PreformScanAsync(List<string> workingDirs)

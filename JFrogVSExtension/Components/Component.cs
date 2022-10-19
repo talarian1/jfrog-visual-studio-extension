@@ -22,17 +22,17 @@ namespace JFrogVSExtension.Data
         public List<Issue> Issues { get; set; } = new List<Issue>();
 
         public Component() { }
-        public Component(Dependency artifact)
+        public Component(string artifactId, string packageType)
         {
-            string[] elements = artifact.id.Split(':');
+            string[] elements = artifactId.Split(':');
             if (elements.Length == 2)
             {
                 Name = elements[0];
                 Version = elements[1];
-                Key = artifact.id;
+                Key = artifactId;
                 Group = elements[0];
             }
-            Type = artifact.packageType.ToString();
+            Type = packageType;
         }
         public override bool Equals(object obj)
         {
